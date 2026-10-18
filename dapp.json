@@ -1,0 +1,11 @@
+{
+  "description": "A free pro-grade photo editor that runs entirely in your browser",
+  "icon": {
+    "emoji": "🖼️"
+  },
+  "secrets": [],
+  "governance": {
+    "preset": "you_or_the_group"
+  },
+  "tests": []
+}

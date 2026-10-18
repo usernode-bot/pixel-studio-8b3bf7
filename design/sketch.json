@@ -1,0 +1,14 @@
+{
+  "note": "The featured card this app's creator was shown while it was being made: its emoji (also the app's icon, set in dapp.json), a tagline and a few points that sum up the description in a few words. It is a picture of the idea, not a design: it shows no screen and sets no layout, words or colours. Build from the description in the first version's request; where the two differ, the description wins.",
+  "kind": "featured-card",
+  "emoji": "🖼️",
+  "tagline": "A free pro-grade photo editor that runs entirely in your browser",
+  "points": [
+    "Edit photos with a full pro toolset",
+    "Runs entirely in the browser, nothing to install",
+    "Free and professional-grade for everyone"
+  ],
+  "source": "model",
+  "model": "z-ai/glm-5.3-flash",
+  "createdAt": "2026-10-18T10:52:52.631Z"
+}
