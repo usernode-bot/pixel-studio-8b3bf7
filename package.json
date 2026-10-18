@@ -1,12 +1,12 @@
 {
-  "name": "usernode-app-template",
+  "name": "pixelforge-studio",
   "version": "1.0.0",
   "private": true,
-  "description": "Homeroom app template",
+  "description": "PixelForge Studio: a layered, client-side image editor that runs entirely in your browser",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "npm run build:css",
+    "build": "node -e \"require('fs').accessSync('public/index.html')\"",
     "build:css": "tailwindcss -c tailwind.config.js -i styles/tailwind-input.css -o public/tailwind.css --minify"
   },
   "dependencies": {
@@ -14,7 +14,5 @@
     "pg": "^8.13.0",
     "jsonwebtoken": "^9.0.2"
   },
-  "devDependencies": {
-    "tailwindcss": "3.4.17"
-  }
+  "devDependencies": {}
 }

@@ -16,18 +16,15 @@
         if (v === undefined) return 'undefined';
         if (v === null) return 'null';
         if (typeof v === 'string') return v;
-        if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-        if (typeof v === 'function') return '[Function ' + (v.name || 'anonymous') + ']';
-        if (v instanceof Error) return (v.stack || (v.name + ': ' + v.message));
-        if (depth > 3) return '[…]';
+        if (v instanceof Error) return v.stack || (v.name + ': ' + v.message);
+        if (typeof v !== 'object' || depth > 3) return String(v);
         var seen = new WeakSet();
         return JSON.stringify(v, function (k, val) {
+          if (val instanceof Error) return val.stack || (val.name + ': ' + val.message);
           if (typeof val === 'object' && val !== null) {
             if (seen.has(val)) return '[Circular]';
             seen.add(val);
           }
-          if (typeof val === 'function') return '[Function ' + (val.name || 'anonymous') + ']';
-          if (val instanceof Error) return val.stack || val.message;
           return val;
         });
       } catch (e) { try { return String(v); } catch (_) { return '[unserializable]'; } }
@@ -63,37 +60,15 @@
     try { post('info', ['[dev-console ready]'], { kind: 'ready' }); } catch (_) {}
   })();
   </script>
-  <title>Pixel Studio</title>
+  <title>PixelForge Studio</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c2410c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='2'/><circle cx='8.5' cy='9' r='1.5'/><path d='M3 17l5-5 4 4 5-5 4 4'/></svg>">
-  <!-- Tailwind, PRECOMPILED for this app (was cdn.tailwindcss.com's
-       in-browser engine plus an inline tailwind.config here). The config
-       moved to tailwind.config.js in the repo root; npm run build compiles
-       it to public/tailwind.css with Docker or Paketo on every image build, so the
-       stylesheet is regenerated from THIS commit's markup every deploy and
-       can never drift behind the code. ~7 KB of CSS instead of a ~400 KB
-       engine, and no flash of unstyled content.
-       Writing class names as whole literals is what keeps this working — a
-       class assembled from fragments at runtime (e.g. "bg-" + tone + "-500")
-       is invisible to the compiler. If you genuinely need runtime-generated
-       classes, swap this link for the platform-hosted engine instead:
-       <script src="/usernode-tailwind/v1/tailwind.js"></script> -->
-  <link rel="stylesheet" href="/tailwind.css">
-  <link rel="stylesheet" href="/screens.css">
-  <!-- The platform bridge, centrally hosted and loaded by RELATIVE path (the
-       handler in server.js serves it under a plain "node server.js"; the
-       platform's edge answers it everywhere else). Never vendor it and never
-       write a hostname in front of it.
-       It is NOT conditional on this app calling a bridge API: it is also how
-       the app ANSWERS the shell, so a scaffold without it is invisible to
-       anything that asks the frame a question. Offline launch is one of those.
-       Another is the page's colour: the bridge reports this document's opaque
-       ground to the shell (#1581), which is what makes the platform bar above
-       the app take the app's tone instead of the viewer's theme (#1945).
-       The bridge is also where the app learns the viewer's light/dark theme:
-       the script below reads it. -->
+  <link rel="stylesheet" href="/styles.css">
+  <!-- The platform bridge, centrally hosted and loaded by RELATIVE path. Never
+       vendor it and never write a hostname in front of it. It is also how the
+       app ANSWERS the shell, and where the app learns the viewer's theme. -->
   <script src="/usernode-bridge/v1/bridge.js"></script>
-  <!-- Follow the viewer's Homeroom theme (the bridge reports it), with the
-       OS preference as the fallback outside Homeroom. -->
+  <!-- Follow the viewer's Homeroom theme, with the OS preference as the
+       fallback outside Homeroom. -->
   <script>
     (function () {
       var media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -108,44 +83,111 @@
     })();
   </script>
 </head>
-<body class="min-h-screen bg-ground text-fg">
-  <!-- usernode-spec-screens@1: the screens the spec drew, carried over by the platform as this
-       first version's starting point. Their styles are in public/screens.css.
-       The drawn sample values (file name, slider positions) are emptied here and
-       set from the real photo by public/app.js. -->
-  <div data-spec-screen="1">
-    <div class="px">
-    <p class="text-small text-muted" id="demo-note" data-usernode-demo-note hidden>Staging demo: a sample photo, not yours</p>
-    <div class="hd"><div><h1 class="ttl">Pixel Studio</h1><div class="sub" id="file-info" hidden></div><span class="skeleton inline-block h-5 w-40 rounded" id="file-info-loading" hidden></span></div>
-    <button type="button" class="btn-secondary" id="open-btn" aria-label="Open photo" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Open</button></div>
-    <p class="text-small" id="open-error-inline" role="alert" hidden>This file could not be opened as a photo. <button type="button" class="btn-secondary" id="retry-btn">Try again</button></p>
-    <div class="photo" id="stage" tabindex="0" aria-label="Edited photo. Hold to see the original.">
-    <div class="state-empty" id="empty-state">
-      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="M3 17l5-5 4 4 5-5 4 4"/></svg>
-      <p>Open a photo to start editing. It stays on your device.</p>
-      <button type="button" class="btn-primary" id="empty-open-btn">Open a photo</button>
+<body>
+  <div class="workspace" data-workspace>
+    <div class="menubar">
+      <span class="brand">PixelForge Studio</span>
+      <nav class="menus" id="menus" aria-label="Menus"></nav>
+      <span class="spacer"></span>
+      <button type="button" class="mb-btn" id="undo-btn" data-i18n="undo" title="Ctrl+Z"></button>
+      <button type="button" class="mb-btn" id="redo-btn" data-i18n="redo" title="Ctrl+Shift+Z"></button>
+      <button type="button" class="mb-btn panels-toggle" id="panels-toggle" data-i18n="panels"></button>
+      <button type="button" class="btn-primary" id="export-btn" data-i18n="export"></button>
     </div>
-    <div class="state-error" id="open-error-state" hidden>
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-      <p>This file could not be opened as a photo. Try a JPEG, PNG or WebP.</p>
-      <button type="button" class="btn-primary" id="retry-btn-state">Try again</button>
+    <div class="doctabs" id="doctabs"></div>
+    <div class="optsbar" id="optsbar"></div>
+    <div class="main">
+      <div class="toolscol" id="toolscol" role="toolbar" aria-label="Tools"></div>
+      <div class="stagewrap" id="stagewrap">
+        <div class="empty-state" id="empty-state">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="M3 17l5-5 4 4 5-5 4 4"/></svg>
+          <p data-i18n="emptyHint"></p>
+          <div class="empty-actions">
+            <button type="button" class="btn-primary" id="new-btn" data-i18n="new"></button>
+            <button type="button" class="btn-secondary" id="empty-open-btn" data-i18n="open"></button>
+          </div>
+        </div>
+        <div class="stage-inner" id="stage-inner">
+          <canvas id="stage-canvas" data-stage-canvas></canvas>
+          <canvas id="overlay-canvas"></canvas>
+        </div>
+        <div class="chip" id="compare-chip" data-i18n="original" hidden></div>
+        <div class="crop-ok" id="crop-ok" hidden><button type="button" class="btn-primary" id="crop-apply" data-i18n="applyCrop"></button></div>
+      </div>
+      <div class="panels" id="panels">
+        <div class="ptabs" role="tablist">
+          <button type="button" class="pt on" data-ppage="layers" data-i18n="layers"></button>
+          <button type="button" class="pt" data-ppage="adjustments" data-i18n="adjustments"></button>
+          <button type="button" class="pt" data-ppage="history" data-i18n="history"></button>
+          <button type="button" class="pt" data-ppage="color" data-i18n="color"></button>
+        </div>
+        <div class="ppage on" data-ppage-body="layers">
+          <div class="lopts">
+            <select id="layer-blend" class="fld-sel" aria-label="Blend mode"></select>
+            <input id="layer-opacity" class="fld-num" type="number" min="0" max="100" value="100" aria-label="Opacity %">
+          </div>
+          <div class="lopts">
+            <button type="button" class="mini" id="layer-clip" data-i18n="clip"></button>
+            <button type="button" class="mini" id="layer-mask" data-i18n="addMask"></button>
+            <button type="button" class="mini" id="layer-dup" data-i18n="duplicate"></button>
+            <button type="button" class="mini" id="layer-del" data-i18n="delete"></button>
+          </div>
+          <div class="list" id="layer-list" role="listbox"></div>
+        </div>
+        <div class="ppage" data-ppage-body="adjustments">
+          <div class="list" id="adj-list"></div>
+          <p class="hint" id="adj-hint" data-i18n="adjHint"></p>
+        </div>
+        <div class="ppage" data-ppage-body="history">
+          <div class="list" id="history-list"></div>
+          <p class="hint" id="history-note" hidden data-i18n="historyDropped"></p>
+        </div>
+        <div class="ppage" data-ppage-body="color">
+          <div class="cpick">
+            <div class="swatch-big" id="fg-swatch"></div>
+            <div class="cpick-fields">
+              <label class="cpick-row"><span data-i18n="hue"></span><input type="range" id="cp-h" min="0" max="360" value="0"></label>
+              <label class="cpick-row"><span data-i18n="saturation"></span><input type="range" id="cp-s" min="0" max="100" value="0"></label>
+              <label class="cpick-row"><span data-i18n="value"></span><input type="range" id="cp-v" min="0" max="100" value="100"></label>
+              <input type="color" id="cp-native" class="fld-color" aria-label="Color">
+            </div>
+          </div>
+          <h4 class="sect-label" data-i18n="swatches"></h4>
+          <div class="swatches" id="swatches"></div>
+          <h4 class="sect-label" data-i18n="recentColors"></h4>
+          <div class="swatches" id="recent-colors"></div>
+        </div>
+        <div class="sect">
+          <h4 class="sect-label" data-i18n="histogram"></h4>
+          <canvas id="histogram" class="hist" width="264" height="64"></canvas>
+        </div>
+        <div class="sect">
+          <h4 class="sect-label" data-i18n="navigator"></h4>
+          <canvas id="navigator" class="nav" width="264" height="100"></canvas>
+        </div>
+      </div>
     </div>
-    <div class="opening" id="opening" hidden>Opening photo…</div>
-    <canvas id="preview-canvas" hidden></canvas>
-    <div class="chip" id="chip" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span id="chip-text">Hold to see the original</span></div>
-    </div>
-    <div class="list" id="sliders" hidden>
-    <div class="list-row"><div class="r1"><span class="nm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>Brightness</span><span class="v" id="val-brightness">0</span></div><div class="tr"><input class="slider" id="slider-brightness" type="range" min="-100" max="100" step="1" value="0" aria-label="Brightness"><div class="mid"></div></div></div>
-    <div class="list-row"><div class="r1"><span class="nm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg>Contrast</span><span class="v" id="val-contrast">0</span></div><div class="tr"><input class="slider" id="slider-contrast" type="range" min="-100" max="100" step="1" value="0" aria-label="Contrast"><div class="mid"></div></div></div>
-    <div class="list-row"><div class="r1"><span class="nm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>Saturation</span><span class="v" id="val-saturation">0</span></div><div class="tr"><input class="slider" id="slider-saturation" type="range" min="-100" max="100" step="1" value="0" aria-label="Saturation"><div class="mid"></div></div></div>
-    </div>
-    <div class="bar" id="bar" hidden><button type="button" class="btn-secondary" id="reset-btn" disabled>Reset</button><button type="button" class="btn-primary" id="save-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span id="save-btn-text">Save photo</span></button></div>
-    <p class="text-small" id="save-error" role="alert" hidden>This photo could not be saved. Your edits are still here.</p>
-    <input type="file" id="file-input" accept="image/*" hidden>
+    <div class="statusbar">
+      <span id="status-dims"></span>
+      <span id="status-zoom"></span>
+      <span id="status-autosave"></span>
+      <span id="status-msg" role="status"></span>
     </div>
   </div>
-  <!-- /usernode-spec-screens@1 -->
+  <p class="demo-note" id="demo-note" data-usernode-demo-note hidden>Staging demo: a sample document, not yours</p>
+  <div class="menu-pop" id="menu-pop" hidden></div>
+  <div class="backdrop" id="backdrop" hidden>
+    <div class="dialog" id="dialog-box" role="dialog" aria-modal="true"></div>
+  </div>
+  <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/svg+xml" hidden>
+  <input type="file" id="pfs-input" accept=".pfs" hidden>
+  <script src="/i18n.js"></script>
   <script src="/adjust.js"></script>
+  <script src="/filters.js"></script>
+  <script src="/core.js"></script>
+  <script src="/engine.js"></script>
+  <script src="/pfs.js"></script>
+  <script src="/tools.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

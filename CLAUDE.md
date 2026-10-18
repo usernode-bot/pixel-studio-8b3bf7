@@ -93,14 +93,16 @@ tables you've marked private), etc.
 
 ---
 
-## About Pixel Studio
+## About PixelForge Studio
 
-A free pro-grade photo editor that runs entirely in your browser. Open one
-photo at a time from your device, tune it with three sliders (brightness,
-contrast, saturation) with a live preview, press and hold the photo to
-compare with the original, and download the edited result at full size.
-Nothing is uploaded or stored: all editing is client-side, and this app has
-no database, no API routes and no account data.
+A layered, pro-style image editor that runs entirely in your browser.
+Open images (PNG/JPEG/WebP/GIF/BMP/SVG) or native `.pfs` projects, edit with
+layers (raster/text/shape/fill/adjustment/group), masks, 16 blend modes,
+12 adjustments and 25 filters, selections with marching ants, 25 tools,
+multi-document tabs, undo/redo with a history panel, and export PNG/JPEG/
+WebP/AVIF (flattened PSD pixels-only too). Nothing is uploaded or stored on a
+server: all editing is client-side; the only persistence is a per-device
+IndexedDB autosave. No database, no API routes, no account data.
 
 ## Design
 
@@ -113,18 +115,18 @@ changes the look on purpose.
   light, 251 146 60 dark) for Save photo, the slider fill and the knob ring.
   The photo sits on a near-black `photo` stage (30 27 25 light, 8 8 7 dark),
   as in a darkroom.
-- **Signature element:** the press-and-hold before/after comparison — hold
-  anywhere on the photo (or Space on the focused stage) to peek at the
-  original, with the label in a dark pill at the photo's lower left. Each
-  slider has its own small line icon (sun, half-filled circle, drop) and each
-  track a faint mark at 0.
+- **Signature element:** Hold to compare — hold
+  anywhere on the photo (Hold-to-compare button or backslash key) to peek
+  at the flattened original, with the label in a dark pill at the photo's
+  lower left. Tools are single-stroke line icons in a 48 px column; the
+  marching-ants selection is drawn double-dashed in both looks.
 - **Type scale:** `text-title`, `text-heading`, `text-body`, `text-small`
   unchanged; the family is the system's rounded face (`ui-rounded`,
   `system-ui` fallback), set once in `tailwind.config.js`.
 - **Client-only:** no server state, no uploads; both looks follow the
   viewer's Homeroom theme.
 
-The kit is in `styles/tailwind-input.css`: colour tokens with a light and
+The kit is in `public/styles.css` (plain CSS custom properties, no build step): colour tokens with a light and
 a dark value (named in `tailwind.config.js`), and a few components
 (`page-column`, `btn-primary`, `btn-secondary`, `field`, `list`, `list-row`,
 `card`, `section-label`, `skeleton`, `state-empty`, `state-error`).
@@ -152,6 +154,13 @@ Re-theme by changing the token values there, keeping every text pair at
 
 ## App-specific conventions
 
-_(optional — e.g. "all currency values stored as integer cents, not
-floats"; "the `posts` table is append-only"; "avoid adding new
-dependencies"; etc.)_
+- Client-only: no server state, no uploads, no analytics; the only network
+  paths are the platform's own bridge/dev-console assets and the app's static files.
+- Hand-written Canvas2D engine (`public/engine.js`): layers composite bottom
+  to top via `globalCompositeOperation`; no WebGL/WebGPU yet (View menu says
+  so honestly).
+- Every user-facing string lives in BOTH dictionaries in `public/i18n.js`
+  (en and id, parity-checked at load); never hardcode UI copy.
+- Pixel data lives on HTMLCanvasElement, never raw arrays, so history
+  entries share canvases; pixel history stores dirty-rect ImageData only.
+- The build script is a fast existence check — there is no build step.

@@ -1,5 +1,5 @@
 {
-  "description": "A free pro-grade photo editor that runs entirely in your browser",
+  "description": "PixelForge Studio: a layered, client-side image editor that runs entirely in your browser",
   "icon": {
     "emoji": "🖼️"
   },
@@ -10,18 +10,24 @@
   "bootParams": ["demo"],
   "tests": [
     {
-      "name": "Empty editor",
+      "name": "Empty workspace",
       "path": "/",
-      "expectText": "Open a photo"
+      "expectSelector": "[data-workspace]",
+      "expectText": "Open"
     },
     {
       "id": "demo-editor",
-      "name": "Demo photo with sliders",
+      "name": "Demo document with layers",
       "path": "/?demo=1",
-      "expectSelector": "#preview-canvas",
-      "expectText": "Saturation",
+      "expectSelector": "[data-stage-canvas]",
+      "expectText": "Layers",
       "visual": true,
       "impact": ["public/**", "styles/**"]
+    },
+    {
+      "name": "Demo layers listed",
+      "path": "/?demo=1",
+      "expectText": "Harbour at sunrise"
     },
     {
       "name": "Demo is labelled",
