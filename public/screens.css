@@ -14,7 +14,9 @@
 }
 
 .px {
-  width: 390px;
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
   min-height: 820px;
   background: rgb(var(--ground));
   color: rgb(var(--fg));
@@ -78,3 +80,28 @@
 .bar {display:flex;gap:8px}
 
 .bar .btn-primary {flex:1}
+
+/* ── Editor states and controls (not part of the drawn screen) ────────────
+   Added for the app's behaviour: the stage's empty, loading and open-error
+   states, the save/open error lines, and the range-input sliders that sit
+   over the drawn .tr tracks. The stage is near-black in both looks, so the
+   text on it is white, as the drawn .chip already is. */
+.photo {user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+
+.photo:focus-visible {outline:2px solid rgb(var(--focus));outline-offset:2px}
+
+.photo canvas {display:block}
+
+/* The kit's .list-row is a flex row; this screen's rows stack their label
+   row (.r1) and track (.tr), as drawn. */
+.list-row {flex-direction:column;align-items:stretch;gap:0}
+
+.photo .state-empty,.photo .state-error {position:absolute;inset:0;justify-content:center;gap:12px;color:#fff}
+
+.photo .state-empty p,.photo .state-error p {margin:0;font-size:14px;line-height:20px;color:#fff}
+
+.opening {position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgb(var(--raised));color:rgb(var(--muted));font-size:14px;line-height:20px}
+
+#open-error-inline,#save-error {margin:0;font-size:14px;line-height:20px;color:rgb(var(--danger))}
+
+#open-error-inline {display:flex;align-items:center;gap:12px;flex-wrap:wrap}

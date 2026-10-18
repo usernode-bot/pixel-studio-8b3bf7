@@ -195,6 +195,21 @@ async function start() {
   const server = app.listen(port, () => console.log(`Listening on :${port}`));
   // Let Envoy retire idle upstream connections at 60s, with a 15s margin.
   server.keepAliveTimeout = 75_000;
+
+  // Graceful shutdown: stop accepting connections, drain in-flight ones for
+  // ~3 seconds, close the pool, exit.
+  let draining = false;
+  function shutdown(signal) {
+    if (draining) return;
+    draining = true;
+    console.log(`${signal} received, shutting down`);
+    server.close(() => {
+      pool.end().finally(() => process.exit(0));
+    });
+    setTimeout(() => process.exit(0), 3000).unref();
+  }
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 start().catch(err => { console.error(err); process.exit(1); });

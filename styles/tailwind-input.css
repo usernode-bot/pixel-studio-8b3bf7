@@ -39,21 +39,22 @@
     --on-accent: 255 255 255; /* text on the accent */
     --danger: 185 28 28;
     --on-danger: 255 255 255;
-    --focus: 13 148 136;      /* the keyboard focus ring */
-    --photo: 30 27 25; /* from the spec's screens */
+    --focus: 194 65 12;      /* the keyboard focus ring */
+    --photo: 30 27 25; /* the near-black stage the photo sits on */
   }
   .dark {
-    --ground: 12 10 9;
-    --surface: 28 25 23;
-    --raised: 41 37 36;
+    --ground: 18 17 16;
+    --surface: 28 27 25;
+    --raised: 41 39 37;
     --fg: 245 245 244;
     --muted: 168 162 158;
-    --line: 68 64 60;
-    --accent: 45 212 191;
-    --on-accent: 4 47 46;
+    --line: 64 61 58;
+    --accent: 251 146 60;
+    --on-accent: 41 16 4;
     --danger: 248 113 113;
     --on-danger: 69 10 10;
-    --focus: 94 234 212;
+    --focus: 251 146 60;
+    --photo: 8 8 7;
   }
   /* el.hidden = true hides an element even when a class gives it a display
      (flex, the components below). */
@@ -135,5 +136,67 @@
   .state-empty,
   .state-error {
     @apply flex flex-col items-center gap-2 px-4 py-8 text-center;
+  }
+
+  /* The three adjustment sliders. A native range input, so it is keyboard
+     and touch accessible; the accent fill runs from the 0 mark (50%) to the
+     knob via the --from/--to variables app.js sets. The input is an invisible
+     44 px hit area over the track drawn by screens.css's .tr. */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 100%;
+    height: 44px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+      to right,
+      transparent 0 var(--from, 50%),
+      rgb(var(--accent)) var(--from, 50%) var(--to, 50%),
+      transparent var(--to, 50%) 100%
+    );
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -8px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgb(var(--accent));
+  }
+  .slider::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+      to right,
+      transparent 0 var(--from, 50%),
+      rgb(var(--accent)) var(--from, 50%) var(--to, 50%),
+      transparent var(--to, 50%) 100%
+    );
+  }
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgb(var(--accent));
+  }
+  .slider:focus-visible {
+    outline: none;
+  }
+  .slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px rgb(var(--ground)), 0 0 0 4px rgb(var(--focus));
+  }
+  .slider:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 2px rgb(var(--ground)), 0 0 0 4px rgb(var(--focus));
   }
 }

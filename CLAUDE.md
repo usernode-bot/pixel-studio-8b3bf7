@@ -95,24 +95,34 @@ tables you've marked private), etc.
 
 ## About Pixel Studio
 
-A free pro-grade photo editor that runs entirely in your browser
-
-_(add a sentence or two more of product context here so Claude Code has a
-shared understanding of what this app is for)_
+A free pro-grade photo editor that runs entirely in your browser. Open one
+photo at a time from your device, tune it with three sliders (brightness,
+contrast, saturation) with a live preview, press and hold the photo to
+compare with the original, and download the edited result at full size.
+Nothing is uploaded or stored: all editing is client-side, and this app has
+no database, no API routes and no account data.
 
 ## Design
 
-This app's look. The first real version fills in the blanks; every later
-change follows it, and updates it when a request changes the look on purpose.
+This app's look. Every later change follows it, and updates it when a request
+changes the look on purpose.
 
-- **Palette:** _(name the accent, any second colour and the neutrals, e.g.
-  "accent: tomato red; second: basil green; neutrals: warm greys")_
-- **Signature element:** _(the one thing on screen drawn from this app's
-  subject, which no other app would have)_
+- **Palette:** warm neutral greys (stone: ground 245 245 244, surface white,
+  raised 238 237 235, text 28 25 23, muted 87 83 78, line 222 220 217) so the
+  photo is the colour on screen, with one burnt-orange accent (194 65 12
+  light, 251 146 60 dark) for Save photo, the slider fill and the knob ring.
+  The photo sits on a near-black `photo` stage (30 27 25 light, 8 8 7 dark),
+  as in a darkroom.
+- **Signature element:** the press-and-hold before/after comparison — hold
+  anywhere on the photo (or Space on the focused stage) to peek at the
+  original, with the label in a dark pill at the photo's lower left. Each
+  slider has its own small line icon (sun, half-filled circle, drop) and each
+  track a faint mark at 0.
 - **Type scale:** `text-title`, `text-heading`, `text-body`, `text-small`
-  _(change their sizes in `tailwind.config.js` if you must, not their number)_
-- **One fixed look:** _(only for an app drawn as its own scene, such as a
-  game: which look, and why. Otherwise delete this line.)_
+  unchanged; the family is the system's rounded face (`ui-rounded`,
+  `system-ui` fallback), set once in `tailwind.config.js`.
+- **Client-only:** no server state, no uploads; both looks follow the
+  viewer's Homeroom theme.
 
 The kit is in `styles/tailwind-input.css`: colour tokens with a light and
 a dark value (named in `tailwind.config.js`), and a few components
