@@ -152,6 +152,58 @@ Re-theme by changing the token values there, keeping every text pair at
 
 ## App-specific conventions
 
-_(optional — e.g. "all currency values stored as integer cents, not
-floats"; "the `posts` table is append-only"; "avoid adding new
-dependencies"; etc.)_
+### Phased build protocol
+
+Pixel Studio follows the phased build protocol from issue #2 (Section 0 of
+the master build prompt). The rules:
+
+- **Shared log:** `worklog.md` at the repo root, append-only. Every agent
+  reads it (and the files it is told to extend) before starting, and appends
+  one entry when finished, in the Section 0.1 template, quoted verbatim:
+
+      -
+      Task ID: <id>
+      Agent: <name>
+      Task: <one-line task>
+
+      Work Log:
+      - <concrete steps taken>
+
+      Stage Summary:
+      - <key results, decisions, produced artifacts>
+
+- **Task IDs:** each phase is P0 to P7. Parallel parts inside a phase are
+  P3-a, P3-b and so on, and are dispatched in parallel only when they touch
+  disjoint files. When in doubt, run them sequentially.
+- **Briefs:** every sub-agent brief is self-contained (the agent cannot see
+  the master prompt or the conversation) and carries (a) its Task ID, (b) the
+  relevant blueprint sections verbatim, (c) the exact files it owns, (d) its
+  acceptance tests, (e) the worklog protocol above.
+- **Takeover rule:** if a sub-agent times out or dies with its work about 95%
+  complete, the orchestrator finishes the remaining wiring itself, runs the
+  gates, and records "completed by orchestrator after agent timeout" in
+  `worklog.md`. A phase is never re-dispatched from scratch.
+- **Commits:** one conventional commit per phase (`feat:`, `fix:`, `chore:`),
+  never secrets or tokens, and a `v1.0` tag after Phase 7. Homeroom makes the
+  commits and pushes, so no direct `git push` (platform conventions).
+- **Gates.** Run G1 to G5 after every phase, all green before the next
+  dispatch, and fix forward inside the failing phase. Each gate's command
+  now, and after Phase P0 adds the new stack:
+
+  | Gate | Now | After P0 |
+  | --- | --- | --- |
+  | G1 build | `npm run build` | `bun install && bun run build` |
+  | G2 lint | none | `bun run lint`, 0 errors and 0 warnings |
+  | G3 unit tests | none | `bunx vitest run` |
+  | G4 smoke | `npm start` plus a manual smoke of the editor: open a photo, three sliders, hold to compare, Save photo, `?demo=1` | `bun run dev` plus the phase's acceptance tests |
+  | G5 worklog | every agent that ran has appended its entry | same |
+
+- **Anti-scope:** build only what the current phase lists. No PSD code before
+  Phase 5, no WebGPU before Phase 6. Extra ideas a sub-agent proposes go into
+  a "future" note in the worklog, not the tree.
+- **Status:** P0 not started: waiting on Sections 1 to 7 of the master prompt
+  (issue #2).
+- **Precedence:** the hosted Homeroom platform conventions and this file's
+  "## Design" section still apply (theme-following light/dark, design-kit
+  colour tokens, no direct pushes). Where the protocol conflicts with them,
+  they win.
