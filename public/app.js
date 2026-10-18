@@ -61,6 +61,9 @@
     els.sliders.hidden = !ready;
     els.bar.hidden = !ready;
     els.saveError.hidden = true;
+    // The header Open button appears only once a photo is open, so on the
+    // empty screen "Open a photo" is the single call to action.
+    els.openBtn.hidden = !current;
 
     els.fileInfo.hidden = !(ready && current);
     els.fileInfoLoading.hidden = next !== 'loading';
