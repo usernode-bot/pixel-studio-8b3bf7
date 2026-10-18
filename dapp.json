@@ -7,7 +7,9 @@
   "governance": {
     "preset": "you_or_the_group"
   },
-  "bootParams": ["demo"],
+  "bootParams": [
+    "demo"
+  ],
   "tests": [
     {
       "name": "Empty editor",
@@ -21,7 +23,10 @@
       "expectSelector": "#preview-canvas",
       "expectText": "Saturation",
       "visual": true,
-      "impact": ["public/**", "styles/**"]
+      "impact": [
+        "public/**",
+        "styles/**"
+      ]
     },
     {
       "name": "Demo is labelled",
@@ -29,5 +34,9 @@
       "expectSelector": "[data-usernode-demo-note]",
       "expectText": "Staging demo"
     }
-  ]
+  ],
+  "visibility": {
+    "build": "public",
+    "view": "public"
+  }
 }
