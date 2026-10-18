@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+
   <script>
   // usernode-dev-console@1
   (function () {
@@ -27,7 +27,7 @@
             seen.add(val);
           }
           if (typeof val === 'function') return '[Function ' + (val.name || 'anonymous') + ']';
-          if (val instanceof Error) return val.stack || (val.name + ': ' + val.message);
+          if (val instanceof Error) return val.stack || val.message;
           return val;
         });
       } catch (e) { try { return String(v); } catch (_) { return '[unserializable]'; } }
@@ -64,7 +64,7 @@
   })();
   </script>
   <title>Pixel Studio</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%237c3aed'/><circle cx='50' cy='50' r='18' fill='white'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c2410c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='2'/><circle cx='8.5' cy='9' r='1.5'/><path d='M3 17l5-5 4 4 5-5 4 4'/></svg>">
   <!-- Tailwind, PRECOMPILED for this app (was cdn.tailwindcss.com's
        in-browser engine plus an inline tailwind.config here). The config
        moved to tailwind.config.js in the repo root; npm run build compiles
@@ -78,6 +78,7 @@
        classes, swap this link for the platform-hosted engine instead:
        <script src="/usernode-tailwind/v1/tailwind.js"></script> -->
   <link rel="stylesheet" href="/tailwind.css">
+  <link rel="stylesheet" href="/screens.css">
   <!-- The platform bridge, centrally hosted and loaded by RELATIVE path (the
        handler in server.js serves it under a plain "node server.js"; the
        platform's edge answers it everywhere else). Never vendor it and never
@@ -108,28 +109,43 @@
   </script>
 </head>
 <body class="min-h-screen bg-ground text-fg">
-  <!-- Built from the design kit in styles/tailwind-input.css: colour tokens
-       that are right in both looks, and components for buttons, fields,
-       lists, cards and data states. The real app keeps the kit; CLAUDE.md's
-       "## Design" says how. -->
-  <!-- (Named in prose on purpose: Tailwind compiles any class-name word in
-       these files, comments included, and the starter should ship only the
-       components its screen uses.) -->
-  <main class="mx-auto flex max-w-md flex-col gap-8 px-4 py-10">
-
-    <!-- usernode-starter-notice@1 — starter-template messaging. When building
-         the user's real app, replace this whole screen and delete this block,
-         both sentinel comments included. -->
-    <section class="card flex flex-col items-start gap-3">
-      <div class="flex h-20 w-20 items-center justify-center rounded-2xl border border-line bg-ground text-title">🖼️</div>
-      <span class="rounded-full bg-raised px-3 py-1 text-small font-medium text-muted">Starter template</span>
-      <h1 class="text-title">Pixel Studio</h1>
-      <p class="text-body text-muted">Welcome to your new app! Everything on this screen is placeholder content that came with it.</p>
-      <p class="text-body text-muted">To change this app, ask Homeroom bot: tap the <strong class="font-semibold text-fg">Homeroom icon</strong>, then <strong class="font-semibold text-fg">Suggest an improvement</strong>. Describe what you'd like in plain English, and it will be turned into your real app.</p>
-    </section>
-    <!-- /usernode-starter-notice@1 -->
-
-    <p class="text-center text-small text-muted">Built on Homeroom. This template screen disappears once you build your real app.</p>
-  </main>
+  <!-- usernode-spec-screens@1: the screens the spec drew, carried over by the platform as this
+       first version's starting point. Their styles are in public/screens.css.
+       The drawn sample values (file name, slider positions) are emptied here and
+       set from the real photo by public/app.js. -->
+  <div data-spec-screen="1">
+    <div class="px">
+    <p class="text-small text-muted" id="demo-note" data-usernode-demo-note hidden>Staging demo: a sample photo, not yours</p>
+    <div class="hd"><div><h1 class="ttl">Pixel Studio</h1><div class="sub" id="file-info" hidden></div><span class="skeleton inline-block h-5 w-40 rounded" id="file-info-loading" hidden></span></div>
+    <button type="button" class="btn-secondary" id="open-btn" aria-label="Open photo" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Open</button></div>
+    <p class="text-small" id="open-error-inline" role="alert" hidden>This file could not be opened as a photo. <button type="button" class="btn-secondary" id="retry-btn">Try again</button></p>
+    <div class="photo" id="stage" tabindex="0" aria-label="Edited photo. Hold to see the original.">
+    <div class="state-empty" id="empty-state">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="M3 17l5-5 4 4 5-5 4 4"/></svg>
+      <p>Open a photo to start editing. It stays on your device.</p>
+      <button type="button" class="btn-primary" id="empty-open-btn">Open a photo</button>
+    </div>
+    <div class="state-error" id="open-error-state" hidden>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <p>This file could not be opened as a photo. Try a JPEG, PNG or WebP.</p>
+      <button type="button" class="btn-primary" id="retry-btn-state">Try again</button>
+    </div>
+    <div class="opening" id="opening" hidden>Opening photo…</div>
+    <canvas id="preview-canvas" hidden></canvas>
+    <div class="chip" id="chip" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span id="chip-text">Hold to see the original</span></div>
+    </div>
+    <div class="list" id="sliders" hidden>
+    <div class="list-row"><div class="r1"><span class="nm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>Brightness</span><span class="v" id="val-brightness">0</span></div><div class="tr"><input class="slider" id="slider-brightness" type="range" min="-100" max="100" step="1" value="0" aria-label="Brightness"><div class="mid"></div></div></div>
+    <div class="list-row"><div class="r1"><span class="nm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg>Contrast</span><span class="v" id="val-contrast">0</span></div><div class="tr"><input class="slider" id="slider-contrast" type="range" min="-100" max="100" step="1" value="0" aria-label="Contrast"><div class="mid"></div></div></div>
+    <div class="list-row"><div class="r1"><span class="nm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>Saturation</span><span class="v" id="val-saturation">0</span></div><div class="tr"><input class="slider" id="slider-saturation" type="range" min="-100" max="100" step="1" value="0" aria-label="Saturation"><div class="mid"></div></div></div>
+    </div>
+    <div class="bar" id="bar" hidden><button type="button" class="btn-secondary" id="reset-btn" disabled>Reset</button><button type="button" class="btn-primary" id="save-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span id="save-btn-text">Save photo</span></button></div>
+    <p class="text-small" id="save-error" role="alert" hidden>This photo could not be saved. Your edits are still here.</p>
+    <input type="file" id="file-input" accept="image/*" hidden>
+    </div>
+  </div>
+  <!-- /usernode-spec-screens@1 -->
+  <script src="/adjust.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>

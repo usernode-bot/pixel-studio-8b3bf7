@@ -7,5 +7,27 @@
   "governance": {
     "preset": "you_or_the_group"
   },
-  "tests": []
+  "bootParams": ["demo"],
+  "tests": [
+    {
+      "name": "Empty editor",
+      "path": "/",
+      "expectText": "Open a photo"
+    },
+    {
+      "id": "demo-editor",
+      "name": "Demo photo with sliders",
+      "path": "/?demo=1",
+      "expectSelector": "#preview-canvas",
+      "expectText": "Saturation",
+      "visual": true,
+      "impact": ["public/**", "styles/**"]
+    },
+    {
+      "name": "Demo is labelled",
+      "path": "/?demo=1",
+      "expectSelector": "[data-usernode-demo-note]",
+      "expectText": "Staging demo"
+    }
+  ]
 }

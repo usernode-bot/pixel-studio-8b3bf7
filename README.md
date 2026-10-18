@@ -1,27 +1,37 @@
 # Pixel Studio
 
-> **Starter template** — this repo was scaffolded by Homeroom Social
-> Vibecoding. Everything in it is placeholder example code until the
-> app's first real feature is built.
+A free, professional-grade photo editor that runs entirely in your browser.
+Open one photo from your device, adjust its brightness, contrast and
+saturation with live preview, press and hold the photo to compare it with the
+original, and download the edited result at full size.
 
-The scaffold is a small working demo that proves the plumbing works:
+Everything happens client-side: nothing is uploaded, nothing is stored, and
+the original file is never changed. The saved photo keeps the original's
+format where the browser can write it (JPEG stays JPEG, PNG stays PNG,
+anything else saves as PNG) and is named after it with `-edited` added.
 
-- **Sign-in** — the server verifies the platform-issued user token
-  (an RS256 JWT) on every request, so the app already knows who is
-  using it. No accounts to build.
-- **Database** — the app has its own private Postgres database, ready
-  to store things.
-- **Styling** — Tailwind CSS, precompiled by `npm run build` during
-  image creation with either Kubernetes/Paketo or standalone Docker, in a
-  light and a dark look that follow the viewer's Homeroom theme.
+## How it works
 
-## Replacing the template
+- A static single page (`public/`) served by `server.js` (Express). No
+  database, no API routes, no accounts.
+- `public/app.js` is the editor: a small `empty → loading → ready` state
+  machine plus error states, decoding with `createImageBitmap` (which keeps
+  EXIF orientation), a preview canvas driven by a CSS `filter`, hold-to-compare
+  on pointer or Space, and a full-size save through `toBlob`.
+- `public/adjust.js` holds the pure `applyAdjust` maths that matches the
+  preview's CSS filter chain, so the downloaded file looks like the preview.
+- `?demo=1` loads a bundled drawn photo (`public/demo/harbour-sunrise.svg`,
+  rasterised at 4032 × 3024 as "harbour-sunrise.jpg") with adjustments already
+  applied, labelled "Staging demo" at the top of the screen.
+- Styling is the app's design kit: tokens in `styles/tailwind-input.css`,
+  compiled by `npm run build` to `public/tailwind.css`. Warm neutral greys and
+  one burnt-orange accent, light and dark, following the viewer's Homeroom
+  theme.
 
-To change this app, ask Homeroom bot: open the app on Homeroom, tap the
-Homeroom icon in the header, then **Suggest an improvement**, and describe
-the app you want in plain English. The template will be replaced with your
-real app. You can also run
-Claude Code against this repo directly; start with `CLAUDE.md`, which
-carries the app-specific notes and points at the platform rules.
+## Develop
 
-Once the real app exists, rewrite this README to describe it.
+```sh
+npm install
+npm run build   # compile the stylesheet
+node server.js  # serve on :3000
+```

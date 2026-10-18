@@ -55,6 +55,10 @@ module.exports = {
         danger: token('danger'),
         'on-danger': token('on-danger'),
         focus: token('focus'), // the keyboard focus ring
+        photo: token('photo'), // the near-black stage the photo sits on
+      },
+      fontFamily: {
+        sans: ['ui-rounded', 'system-ui', '-apple-system', 'sans-serif'],
       },
       // The type scale: four sizes, and nothing in between.
       fontSize: {
