@@ -193,7 +193,7 @@ the master build prompt). The rules:
   | Gate | Now | After P0 |
   | --- | --- | --- |
   | G1 build | `npm run build` | `bun install && bun run build` |
-  | G2 lint | none | `bun run lint`, 0 errors and 0 warnings |
+  | G2 lint | `npm run lint:boundaries` | `bun run lint` (which must include `node scripts/check-boundaries.mjs`), 0 errors and 0 warnings |
   | G3 unit tests | none | `bunx vitest run` |
   | G4 smoke | `npm start` plus a manual smoke of the editor: open a photo, three sliders, hold to compare, Save photo, `?demo=1` | `bun run dev` plus the phase's acceptance tests |
   | G5 worklog | every agent that ran has appended its entry | same |
@@ -207,3 +207,104 @@ the master build prompt). The rules:
   "## Design" section still apply (theme-following light/dark, design-kit
   colour tokens, no direct pushes). Where the protocol conflicts with them,
   they win.
+
+### Architecture rules (Section 2, issue #4)
+
+Adopted as a fixed contract (task S2 in the worklog). Every phase reads
+these before it starts, and every phase obeys them. Changing a rule later
+needs its own request. Each rule is enforced by the phase that builds the
+feature it governs; no phase builds a feature early just to satisfy a rule
+(anti-scope above still holds: no PSD before P5, no workers/GPU before P6).
+Adopting these rules is not a rebuild: P0 creates the `src/` layout below
+together with the Next.js and Bun stack that Section 1 names.
+
+R1 Module map and STRICT dependency direction:
+
+     src/engine/     pure document model + pixel engine (NO React, NO store
+                     imports; only it may touch canvas/ImageData primitives)
+     src/state/      Zustand store: documents, selection, view, tools, colors,
+                     history wiring, UI state, settings
+     src/canvas/     viewport stage + pointer/event contract + gpu display
+     src/tools/      tool controllers (read options from store, mutate through
+                     store actions)
+     src/workspace/  editor shell: panels, options bar, dialogs, menus
+     src/formats/    raster import/export + PSD writer/reader
+     src/documents/  native .pfs serializer
+     src/storage/    IndexedDB autosave + crash recovery
+     src/workers/    Web Worker entry (filters/adjust/histogram/inpaint)
+     src/i18n/       EN/ID dictionaries + provider
+     src/shortcuts/  data-driven keyboard shortcut registry
+
+   Dependency arrows may only point: workspace → tools/canvas → state →
+   engine. documents/formats/storage sit beside state but may import ONLY
+   from engine (+ browser APIs). The engine NEVER imports upward. Enforce
+   via lint + review.
+
+R2 Engine purity: engine functions transform document data or pixel buffers
+   and never touch the store or DOM beyond canvas primitives. Pixel buffers
+   (canvases) are treated as mutable OUTSIDE history; raster edits commit
+   diff-region history entries via the store's commitPixelEdit().
+
+R3 Renderer purity: the compositor is a pure function of document state —
+   same doc in, same pixels out. It NEVER mutates layer buffers. A
+   checkerboard is painted behind transparent areas for preview only, never
+   exported.
+
+R4 Privacy by architecture: zero upload endpoints; pixel data never crosses
+   the network; autosave/recovery live in the browser's own IndexedDB.
+
+R5 Honesty rule: every partial/limited capability (GIF first frame, SVG
+   rasterized on import, diffusion-only inpainting, PSD subset…) states its
+   real scope in the UI and docs. Never silently flatten or corrupt.
+
+R6 i18n rule: every user-facing string is a dictionary key (TranslationKey
+   type), EN and ID both complete, enforced by scripts/i18n-parity.ts.
+
+R7 History rule: UI state (dialogs, panels) lives in the store but NEVER in
+   history. All user-visible mutations flow through store actions that push
+   history entries.
+
+R8 Memory rule: buffers sent to workers are cloned-then-TRANSFERRED
+   (zero-copy, no second main-thread copy, source never detached); history
+   enforces byte budgets; thumbnail caches are bounded and cleared on
+   document switch; GPU resources are destroyed on every path.
+
+**Allowed imports (the rule table `scripts/check-boundaries.mjs` enforces):**
+
+| Module under `src/` | May import from `src/` | Banned packages |
+| --- | --- | --- |
+| engine | engine | `react`, `react-dom`, `zustand`, `next` |
+| state | state, engine, documents, formats, storage | `react-dom`, `next` |
+| canvas | canvas, state, engine, i18n, shortcuts | none |
+| tools | tools, canvas, state, engine, i18n, shortcuts | none |
+| workspace | everything except workers (workers are spawned by URL, never imported) | none |
+| documents, formats, storage | itself, engine | `react`, `react-dom`, `zustand`, `next` |
+| workers | workers, engine | `react`, `react-dom`, `zustand`, `next` |
+| i18n | i18n | `zustand` |
+| shortcuts | shortcuts, i18n | `react-dom` |
+
+A file directly under `src/`, or in a folder not listed, is reported as
+"unknown module" — new modules are added to this table on purpose. Tools may
+import the canvas's pointer-event contract (tools may import canvas); canvas
+may never import tools. Code outside `src/` is not constrained by the
+checker.
+
+**Enforced by the checker now (vacuous until P0 creates `src/`):** R1's
+import direction, including the package bans above (the engine bans are the
+checker's part of R2). **Review-only:** the canvas/ImageData exclusivity in
+R2 (a simple import scan cannot see it), the compositor purity and
+preview-only checkerboard in R3, the honesty scope statements in R5, the
+history wiring in R7, and the buffer budgets in R8 — a violating import
+fails G2, but these stay review rules and reviewers check them in every
+phase's diff.
+
+| Rule | Enforced from | How |
+| --- | --- | --- |
+| R1 module map | Now (vacuous); P0 creates `src/` | Checker, part of G2 |
+| R2 engine purity, `commitPixelEdit()` | Phase that lands the store and history | Checker bans React, Zustand and Next in the engine; diff-region history and canvas exclusivity checked in review |
+| R3 renderer purity, preview-only checkerboard | Phase that lands the compositor | Unit test in that phase: same document gives same pixels, and layer buffers are unchanged after compositing |
+| R4 privacy | Now | Holds today (no upload routes in `server.js`); review on every phase |
+| R5 honesty | Each phase that ships a limited capability (P5 for the PSD subset) | That phase's acceptance tests check the UI text |
+| R6 i18n | i18n phase | `scripts/i18n-parity.ts` written then, not now |
+| R7 history | Phase that lands the store and history | Store tests: UI-state actions push no history entries |
+| R8 memory | History phase (byte budgets), P6 (workers, GPU) | Tests in those phases |

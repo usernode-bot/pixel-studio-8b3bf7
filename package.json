@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "build": "npm run build:css",
-    "build:css": "tailwindcss -c tailwind.config.js -i styles/tailwind-input.css -o public/tailwind.css --minify"
+    "build:css": "tailwindcss -c tailwind.config.js -i styles/tailwind-input.css -o public/tailwind.css --minify",
+    "lint:boundaries": "node scripts/check-boundaries.mjs",
+    "test:boundaries": "node --test scripts/*.test.mjs"
   },
   "dependencies": {
     "express": "^4.21.0",
