@@ -29,6 +29,12 @@
       ]
     },
     {
+      "name": "Before and after split line",
+      "path": "/?demo=1",
+      "expectSelector": "#split-handle",
+      "expectText": "Edited"
+    },
+    {
       "name": "Demo is labelled",
       "path": "/?demo=1",
       "expectSelector": "[data-usernode-demo-note]",
