@@ -23,6 +23,11 @@
     openErrorState: $('open-error-state'),
     opening: $('opening'),
     canvas: $('preview-canvas'),
+    original: $('original-canvas'),
+    split: $('split'),
+    splitHandle: $('split-handle'),
+    splitLabelOriginal: $('split-label-original'),
+    splitLabelEdited: $('split-label-edited'),
     chip: $('chip'),
     chipText: $('chip-text'),
     sliders: $('sliders'),
@@ -45,6 +50,14 @@
   var saving = false;
   var filterRaf = 0;
 
+  // Before/after split: a fraction of the photo's drawn width, and where the
+  // photo sits inside the stage in CSS px (null while no photo is drawn).
+  var split = 0.5;
+  var photoRect = null;
+  var dragging = false;
+  var splitRaf = 0;
+  var queuedSplit = null;
+
   // ── State machine ──────────────────────────────────────────────────────
   // Shows exactly one stage state at a time; the header, sliders and bar
   // follow the same state.
@@ -57,6 +70,8 @@
     els.openErrorState.hidden = next !== 'error';
     els.opening.hidden = next !== 'loading';
     els.canvas.hidden = !ready;
+    els.original.hidden = !ready;
+    els.split.hidden = !ready;
     els.chip.hidden = !ready;
     els.sliders.hidden = !ready;
     els.bar.hidden = !ready;
@@ -141,15 +156,15 @@
   els.resetBtn.addEventListener('click', function () { setSliders(null); });
 
   // ── Preview canvas ─────────────────────────────────────────────────────
-  function drawPreview() {
-    if (!current) return;
+  // Sizes a canvas to the stage and draws the photo contained and centred.
+  // Returns where the photo sits in the stage, in CSS px.
+  function drawStageCanvas(canvas) {
     var stage = els.stage;
     var cssW = stage.clientWidth;
     var cssH = stage.clientHeight;
-    if (!cssW || !cssH) return;
+    if (!cssW || !cssH) return null;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    var canvas = els.canvas;
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     canvas.style.width = cssW + 'px';
@@ -163,10 +178,101 @@
     var scale = Math.min(cssW / current.width, cssH / current.height);
     var dw = current.width * scale;
     var dh = current.height * scale;
-    ctx.drawImage(current.drawable, (cssW - dw) / 2 * dpr, (cssH - dh) / 2 * dpr, dw * dpr, dh * dpr);
+    var left = (cssW - dw) / 2;
+    var top = (cssH - dh) / 2;
+    ctx.drawImage(current.drawable, left * dpr, top * dpr, dw * dpr, dh * dpr);
 
-    canvas.style.filter = filterString();
+    return { left: left, top: top, width: dw, height: dh };
   }
+
+  function drawPreview() {
+    if (!current) return;
+    photoRect = drawStageCanvas(els.canvas);
+    if (!photoRect) return;
+    drawStageCanvas(els.original);
+    els.canvas.style.filter = filterString();
+    layoutSplit();
+  }
+
+  // ── Before/after split ─────────────────────────────────────────────────
+  // The split element covers the photo itself, never the letterbox bands,
+  // and the original canvas is clipped to the left of the line.
+  function layoutSplit() {
+    if (!photoRect) return;
+    els.split.style.left = photoRect.left + 'px';
+    els.split.style.top = photoRect.top + 'px';
+    els.split.style.width = photoRect.width + 'px';
+    els.split.style.height = photoRect.height + 'px';
+    els.split.style.setProperty('--split', split * 100 + '%');
+
+    var stageWidth = els.stage.clientWidth;
+    var splitX = photoRect.left + split * photoRect.width;
+    els.original.style.clipPath = 'inset(0 ' + Math.max(0, stageWidth - splitX) + 'px 0 0)';
+
+    var pct = Math.round(split * 100);
+    els.splitHandle.setAttribute('aria-valuenow', String(pct));
+    els.splitHandle.setAttribute('aria-valuetext', pct + '% original');
+    els.splitLabelOriginal.hidden = split < 0.15;
+    els.splitLabelEdited.hidden = split > 0.85;
+  }
+
+  function setSplit(f) {
+    split = Math.max(0, Math.min(1, f));
+    layoutSplit();
+  }
+
+  function queueSplit(f) {
+    queuedSplit = f;
+    if (splitRaf) return;
+    splitRaf = requestAnimationFrame(function () {
+      splitRaf = 0;
+      if (queuedSplit !== null) {
+        setSplit(queuedSplit);
+        queuedSplit = null;
+      }
+    });
+  }
+
+  // Only the handle can be dragged: pressing anywhere else still means
+  // "hold to see the original", so the two gestures never fight.
+  els.splitHandle.addEventListener('pointerdown', function (e) {
+    if (e.button && e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+    // preventDefault above stops the stage's hold gesture but also the
+    // browser's own focus-on-press, so focus the handle ourselves.
+    els.splitHandle.focus();
+    dragging = true;
+    if (els.splitHandle.setPointerCapture) {
+      try { els.splitHandle.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+  });
+
+  els.splitHandle.addEventListener('pointermove', function (e) {
+    if (!dragging || !photoRect) return;
+    var stageRect = els.stage.getBoundingClientRect();
+    queueSplit((e.clientX - stageRect.left - photoRect.left) / photoRect.width);
+  });
+
+  ['pointerup', 'pointercancel'].forEach(function (type) {
+    els.splitHandle.addEventListener(type, function (e) {
+      if (!dragging) return;
+      e.stopPropagation();
+      dragging = false;
+    });
+  });
+
+  // Arrow keys move the line 5% of the photo's width. Space is left alone,
+  // so it still reaches the stage and starts the hold-to-compare peek.
+  els.splitHandle.addEventListener('keydown', function (e) {
+    var delta = 0;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') delta = -0.05;
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') delta = 0.05;
+    if (!delta) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setSplit(split + delta);
+  });
 
   window.addEventListener('resize', function () {
     if (state === 'ready') requestAnimationFrame(drawPreview);
@@ -177,6 +283,7 @@
     if (state !== 'ready' || holding) return;
     holding = true;
     els.canvas.style.filter = 'none';
+    els.stage.classList.add('holding');
     els.chipText.textContent = 'Original';
   }
 
@@ -184,6 +291,7 @@
     if (!holding) return;
     holding = false;
     els.canvas.style.filter = filterString();
+    els.stage.classList.remove('holding');
     els.chipText.textContent = 'Hold to see the original';
   }
 
@@ -249,6 +357,7 @@
     if (current.url) URL.revokeObjectURL(current.url);
     if (current.drawable && current.drawable.close) current.drawable.close();
     current = null;
+    photoRect = null;
   }
 
   function usePhoto(decoded, name, type) {
@@ -262,6 +371,9 @@
       type: type || '',
     };
     setSliders(null);
+    // Every new photo (and the demo) starts with the split in the middle;
+    // Reset of the sliders leaves it where it is.
+    split = 0.5;
     drawPreview();
     setState('ready');
   }

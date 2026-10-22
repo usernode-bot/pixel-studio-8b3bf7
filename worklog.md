@@ -42,3 +42,21 @@ Stage Summary:
 - Section 2 is now the app's architecture contract; every later phase reads it before starting and changing a rule needs its own request.
 - The R1 import-direction check exists and is green, but is vacuous until P0 creates src/: P0 must wire node scripts/check-boundaries.mjs into bun run lint (it is not lint-tool dependent).
 - Rules R2 (canvas exclusivity), R3, R5, R7, R8 stay review-only per the spec; R4 privacy already holds in server.js.
+
+-
+Task ID: F13
+Agent: Homeroom bot
+Task: Add a before and after compare slider on the canvas (issue #13)
+
+Work Log:
+- Added a second, unfiltered canvas (#original-canvas) over the preview canvas and a #split element (orange line, 44 px round handle, Original/Edited pills) inside #stage in public/index.html; #chip still paints last.
+- Refactored drawPreview() to draw both canvases through one helper and record photoRect; added layoutSplit(), setSplit() and a per-frame queued drag so the split covers only the photo, never the letterbox bands.
+- The original canvas is clipped with inset() to the left of the line; sliders still only change the preview canvas's CSS filter, so the left side stays untouched and updates never redraw the original canvas.
+- Handle drag: pointerdown stops propagation so the hold gesture never starts, pointer capture, pointermove throttled per frame, pointerup/pointercancel end it, touch-action none. Arrow keys move 5% per press; Space still bubbles to the stage for hold-to-compare.
+- Holding adds .holding to #stage, which hides the split and the original canvas; usePhoto() resets the split to 0.5; closeCurrent() clears photoRect; saveEdited() is untouched so the split never reaches the saved file.
+- Styled the line, handle, focus ring and pills in public/screens.css from --accent/--photo/--focus and the existing chip pill colour; added a dapp.json check for #split-handle on ?demo=1; rewrote the Signature element bullet in CLAUDE.md's Design section.
+- Gates: npm run build, npm run lint:boundaries, sh /home/node/.claude/usernode-app-check, plus a browser pass on ?demo=1 at phone and desktop widths in both looks.
+
+Stage Summary:
+- A draggable split compare sits beside the existing hold gesture: original left, edit right, keyboard accessible, reset to the middle per photo, and never in the saved image.
+- Future: no change to the hold gesture or the three-slider model was needed.

@@ -97,6 +97,31 @@
 
 .photo canvas {display:block}
 
+/* ── Before/after split compare ──────────────────────────────────────────
+   The original is the same photo drawn again without the filter, then
+   clipped to the left of the line. The line and handle sit over the photo
+   and follow --split, set from app.js. Holding to see the original hides
+   them. Colours come from the tokens, except the white knob face and the
+   dark pill, which the drawn .kn and .chip already use. */
+#original-canvas {position:absolute;left:0;top:0;pointer-events:none}
+#original-canvas[hidden] {display:none}
+
+.split {position:absolute;pointer-events:none}
+
+.split-line {position:absolute;top:0;bottom:0;left:var(--split,50%);width:2px;margin-left:-1px;background:rgb(var(--accent))}
+
+.split-handle {position:absolute;left:var(--split,50%);top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:ew-resize;touch-action:none;border-radius:50%}
+
+.split-handle span {width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid rgb(var(--accent));color:rgb(var(--accent));display:flex;align-items:center;justify-content:center}
+
+.split-handle:focus-visible {outline:none;box-shadow:0 0 0 2px rgb(var(--photo)),0 0 0 4px rgb(var(--focus))}
+
+.split-label {position:absolute;top:8px;background:rgb(28 25 23/.78);color:#fff;border-radius:999px;padding:2px 10px;font-size:14px;line-height:20px}
+.split-label.l {left:8px}
+.split-label.r {right:8px}
+
+.photo.holding #original-canvas,.photo.holding .split {visibility:hidden}
+
 /* The kit's .list-row is a flex row; this screen's rows stack their label
    row (.r1) and track (.tr), as drawn. */
 .list-row {flex-direction:column;align-items:stretch;gap:0}

@@ -113,11 +113,17 @@ changes the look on purpose.
   light, 251 146 60 dark) for Save photo, the slider fill and the knob ring.
   The photo sits on a near-black `photo` stage (30 27 25 light, 8 8 7 dark),
   as in a darkroom.
-- **Signature element:** the press-and-hold before/after comparison — hold
+- **Signature element:** comparing the edit with the original, two ways. Hold
   anywhere on the photo (or Space on the focused stage) to peek at the
-  original, with the label in a dark pill at the photo's lower left. Each
-  slider has its own small line icon (sun, half-filled circle, drop) and each
-  track a faint mark at 0.
+  original, with the label in a dark pill at the photo's lower left. Beside
+  it, a burnt-orange split line with a white, orange-ringed round handle cuts
+  the photo in two: the original on the left, the edit on the right, with
+  "Original" and "Edited" pills at the photo's top corners. Drag the handle,
+  or focus it and press an arrow key (5% per press), to move the line; it
+  starts in the middle of every new photo and stays where it is left. Holding
+  to see the original hides the line and its labels. Each slider has its own
+  small line icon (sun, half-filled circle, drop) and each track a faint mark
+  at 0.
 - **Type scale:** `text-title`, `text-heading`, `text-body`, `text-small`
   unchanged; the family is the system's rounded face (`ui-rounded`,
   `system-ui` fallback), set once in `tailwind.config.js`.
