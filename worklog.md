@@ -60,3 +60,22 @@ Work Log:
 Stage Summary:
 - A draggable split compare sits beside the existing hold gesture: original left, edit right, keyboard accessible, reset to the middle per photo, and never in the saved image.
 - Future: no change to the hold gesture or the three-slider model was needed.
+-
+Task ID: S6
+Agent: Homeroom bot
+Task: Adopt sections 3.13 to 3.17 and the Section 4 phase plan (issue #6)
+
+Work Log:
+- Read CLAUDE.md, worklog.md and package.json before editing; the change is documentation only.
+- Quoted sections 3.13 (PWA: manifest, service worker, PwaRegister, icons from one SVG via a sharp script), 3.14 (WebGPU present-only display path, fallback chain, texture lifecycle, diagnostics), 3.15 (on-device segmentation and diffusion content-aware fill with honest scope), 3.16 (EN/ID dictionaries and the parity script) and 3.17 (responsive tiers and performance rules) verbatim into CLAUDE.md, in a new "Master build spec" subsection under App-specific conventions after the Architecture rules.
+- Quoted SECTION 4 Phase 0 to Phase 6 with their Missions, Deliverables, acceptance tests A0.1 to A6.4 and handoff notes verbatim in the same subsection.
+- Added "Notes on this text": missing and not invented (Section 1; sections 3.1 to 3.12; Phase 7; Sections 5 to 7), the dark-theme wording yielding to "## Design" (both looks, manifest theme from the tokens), the placeholder name staying "Pixel Studio", P0's lint gate and the allowed-imports table entries P0 and P1 must add for src/lib/, src/components/ and src/history/, CI running on Homeroom's pushes, and the first slice being P0 then P1.
+- Updated the Status bullet in the Phased build protocol: phase plan P0 to P6 adopted, P0 ready to dispatch, missing sections named.
+- Gates run: G1 npm run build passes; G2 npm run lint:boundaries exits 0; G3 npm run test:boundaries passes; G4 smoke skipped as a browser run because nothing user-visible changed; G5 this entry.
+- Confirmed git diff touches only CLAUDE.md and worklog.md: no app code, no dependency, no lockfile and no icon or manifest files, since those belong to Phase P5-b.
+
+Stage Summary:
+- The issue #6 text is now part of the project rulebook alongside issues #2 and #4; the phase plan runs P0 to P6 and each phase goes to the group's vote on its own.
+- P0 is next, then P1 (document model and renderer) as the first editing slice, per makredo on 2026-10-22.
+- No app code or dependencies changed; the PWA files, scripts/gen-icons.mjs and sharp land in P5-b, not here.
+- Future: build P0 once dispatched; phases citing the missing sections wait for that text.
